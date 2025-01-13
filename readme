@@ -20,7 +20,7 @@ Il permet également de visualiser l'impact des revenus et des parts fiscales su
 ## Étape 1 : Charger les bibliothèques nécessaires
 
 
-# Prérequis : ggplot2 pour les visualisations
+### Prérequis : ggplot2 pour les visualisations
 if (!require("ggplot2")) install.packages("ggplot2")
 library(ggplot2)
 
