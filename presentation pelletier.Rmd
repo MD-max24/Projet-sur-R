@@ -1,0 +1,104 @@
+---
+title: "presentation"
+author: "djime mounsif , julien kabore"
+date: "2025-01-13"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Ce projet présente le calcul et la visualisation de l'impôt en fonction du revenu et du nombre de parts fiscales en utilisant R.
+
+## Charger les bibliothèques nécessaires
+
+```{r libraries}
+# Charger ggplot2 pour la visualisation
+library(ggplot2)
+```
+
+## Fonction pour calculer l'impôt
+
+```{r calcul-impot}
+# Fonction pour calculer l'impôt en fonction du revenu et des parts fiscales
+calcul_impot = function(revenu, np) {
+  revenu_par_part = revenu / np
+  impot = 0
+
+  if (revenu_par_part < 10777) {
+    impot = 0
+  } else if (revenu_par_part < 27478) {
+    impot = (revenu_par_part - 10777) * 0.11
+  } else if (revenu_par_part < 78570) {
+    impot = (revenu_par_part - 27478) * 0.3 + (27478 - 10777) * 0.11
+  } else if (revenu_par_part < 168994) {
+    impot <- (revenu_par_part - 78570) * 0.41 + (78570 - 27478) * 0.3 + (27478 - 10777) * 0.11
+  } else {
+    impot <- (revenu_par_part - 168994) * 0.45 + (168994 - 78570) * 0.41 + (78570 - 27478) * 0.3 + (27478 - 10777) * 0.11
+  }
+
+  return(np * impot)
+}
+```
+
+## Création des données initiales
+
+```{r create-data}
+# Création des données initiales sur les revenus et parts fiscales
+revenus_data <- data.frame(
+  Revenu = c(6000, 50000, 75000, 30000, 100000, 15000, 60000),
+  Parts = c(3.5, 2, 3, 1, 4, 1, 2)
+)
+
+# Sauvegarde des données dans un fichier CSV
+write.csv(revenus_data, "revenus.csv", row.names = FALSE)
+cat("Fichier 'revenus.csv' créé avec succès.\n")
+```
+
+## Lecture des données
+
+```{r read-data}
+# Lecture des données depuis le fichier CSV
+revenus_data <- read.csv("revenus.csv")
+cat("Données lues depuis 'revenus.csv':\n")
+print(revenus_data)
+```
+
+## Calcul de l'impôt
+
+```{r calculate-tax}
+# Calcul de l'impôt pour chaque ligne de données
+revenus_data$Impot <- mapply(calcul_impot, revenus_data$Revenu, revenus_data$Parts)
+cat("Données avec impôt calculé:\n")
+print(revenus_data)
+```
+
+## Sauvegarde des résultats
+
+```{r save-results}
+# Sauvegarde des résultats dans un fichier CSV
+write.csv(revenus_data, "resultats_impots.csv", row.names = FALSE)
+cat("Fichier 'resultats_impots.csv' créé avec succès.\n")
+```
+
+## Visualisation
+
+```{r plot-tax}
+# Création d'un graphique pour visualiser l'impôt en fonction du revenu
+ggplot(revenus_data, aes(x = Revenu, y = Impot, color = as.factor(Parts))) +
+  geom_point(size = 3) +
+  labs(
+    title = "Impôt en fonction du revenu et des parts fiscales",
+    x = "Revenu (€)",
+    y = "Impôt (€)",
+    color = "Parts fiscales"
+  ) +
+  theme_minimal()
+```
+
+## Conclusion
+
+Ce projet montre comment on a utiliser R pour analyser et visualiser des données fiscales. Les résultats et visualisations peuvent être facilement partagés ou intégrés dans d'autres analyses.
