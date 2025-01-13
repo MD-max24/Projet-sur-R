@@ -1,0 +1,106 @@
+# Projet de Technique de Programmation - Calcul et Visualisation de l'Impôt
+
+# Auteur : Djime Mounsif , Julien Kabore
+
+
+
+## Objectif
+Ce projet vise à modéliser le calcul de l'impôt sur le revenu en France selon les tranches fiscales.
+Il permet également de visualiser l'impact des revenus et des parts fiscales sur le montant de l'impôt.
+
+### Pourquoi ce projet ?
+ - Fournir une base de calcul personnalisable pour les citoyens ou analystes.
+ - Générer des visualisations interactives pour mieux interpréter les résultats.
+
+### Avantages
+ - Automatisation du calcul pour différents foyers fiscaux.
+ - Personnalisation facile pour analyser diverses situations.
+ - Outil pédagogique pour expliquer les principes de l'imposition progressive.
+
+## Étape 1 : Charger les bibliothèques nécessaires
+
+
+# Prérequis : ggplot2 pour les visualisations
+if (!require("ggplot2")) install.packages("ggplot2")
+library(ggplot2)
+
+
+## Étape 2 : Fonction pour calculer l'impôt
+
+ Cette fonction calcule l'impôt sur le revenu selon les tranches fiscales officielles en France.
+ Elle prend en compte le revenu total du foyer et le nombre de parts fiscales.
+calcul_impot <- function(revenu, np) {
+  revenu_par_part <- revenu / np  # Divise le revenu par le nombre de parts fiscales
+  impot <- 0  # Initialisation de l'impôt à 0
+  
+  if (revenu_par_part < 10777) {
+    impot <- 0  # Pas d'impôt pour les revenus inférieurs à 10 777 €
+  } else if (revenu_par_part < 27478) {
+    impot <- (revenu_par_part - 10777) * 0.11
+  } else if (revenu_par_part < 78570) {
+    impot <- (revenu_par_part - 27478) * 0.3 + (27478 - 10777) * 0.11
+  } else if (revenu_par_part < 168994) {
+    impot <- (revenu_par_part - 78570) * 0.41 + (78570 - 27478) * 0.3 + (27478 - 10777) * 0.11
+  } else {
+    impot <- (revenu_par_part - 168994) * 0.45 + (168994 - 78570) * 0.41 +
+      (78570 - 27478) * 0.3 + (27478 - 10777) * 0.11
+  }
+  
+  
+  return(np * impot)
+}
+
+
+## Étape 3 : Création des données initiales
+
+Nous créons un tableau simulant les revenus et parts fiscales pour plusieurs foyers.
+Cela permet de tester la fonction sur un échantillon représentatif.
+revenus_data <- data.frame(
+  Revenu = c(6000, 50000, 75000, 30000, 100000, 15000, 60000),  
+  Parts = c(3.5, 2, 3, 1, 4, 1, 2)  
+)
+
+### Enregistre les données dans un fichier CSV
+write.csv(revenus_data, "revenus.csv", row.names = FALSE)
+cat("Fichier 'revenus.csv' créé avec succès.\n")
+
+## Étape 4 : Lecture des données
+
+### Charge les données pour les manipuler et effectuer les calculs
+revenus_data <- read.csv("revenus.csv")
+cat("Données lues depuis 'revenus.csv':\n")
+print(revenus_data)
+
+
+## Étape 5 : Calcul de l'impôt
+
+### Ajoute une colonne "Impot" dans le tableau en utilisant la fonction calcul_impot
+revenus_data$Impot <- mapply(calcul_impot, revenus_data$Revenu, revenus_data$Parts)
+cat("Données avec impôt calculé:\n")
+print(revenus_data)
+
+
+## Étape 6 : Sauvegarde des résultats
+
+
+### Enregistre les résultats (avec les impôts calculés) dans un nouveau fichier CSV
+write.csv(revenus_data, "resultats_impots.csv", row.names = FALSE)
+cat("Fichier 'resultats_impots.csv' créé avec succès.\n")
+
+
+## Étape 7 : Visualisation des résultats
+
+ggplot(revenus_data, aes(x = Revenu, y = Impot, color = as.factor(Parts))) +
+  geom_point(size = 3) +  # Points représentant chaque foyer
+  labs(
+    title = "Impôt en fonction du revenu et des parts fiscales",
+    x = "Revenu (€)",  # Étiquette de l'axe des x
+    y = "Impôt (€)",   # Étiquette de l'axe des y
+    color = "Parts fiscales"  # Légende pour les parts fiscales
+  ) +
+  theme_minimal()
+
+
+## Conclusion
+Ce projet démontre comment utiliser R pour modéliser des calculs complexes
+et produire
