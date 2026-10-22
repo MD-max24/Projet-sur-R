@@ -1,106 +1,64 @@
-# Projet de Technique de Programmation - Calcul et Visualisation de l'Impôt
+# La ZFE de Strasbourg a-t-elle fait baisser le NO₂ ?
 
-# Auteur : Djime Mounsif , Julien Kabore
+**Résultat :** l'interdiction des véhicules Crit'Air 5 et non classés (1er janvier 2023) n'est pas associée à une baisse supplémentaire du NO₂ à Strasbourg par rapport à Metz, Nancy et Mulhouse. Strasbourg décroche dès la fin de 2021, avant l'entrée en vigueur de la ZFE, avec un creux en 2022 (−11 % par rapport à 2019), puis l'écart se réduit en partie.
 
+**[Lire le rapport complet](https://md-max24.github.io/zfe-strasbourg/)**
 
+![Event study : écart de NO₂ entre Strasbourg et les villes témoins, par rapport à 2019](figures/fig2_event_study.png)
 
-## Objectif
-Ce projet vise à modéliser le calcul de l'impôt sur le revenu en France selon les tranches fiscales.
-Il permet également de visualiser l'impact des revenus et des parts fiscales sur le montant de l'impôt.
+| Mesure | Valeur |
+|---|---|
+| Baisse du NO₂ à Strasbourg entre 2022 et 2023 (avant/après naïf) | −8,4 % |
+| Effet propre de l'interdiction des Crit'Air 5, relativement aux témoins (β₂ − β₁) | +6,1 % (IC 95 % indicatif : −0,9 % ; +13,5 %) |
+| p-valeur placebo (13 fausses ruptures 2018-2019) | 0,071 |
+| Effet minimum détectable | 2,7 % |
+| Données | 11 stations, 24 824 observations station × jour, 2017-2024 |
 
-### Pourquoi ce projet ?
- - Fournir une base de calcul personnalisable pour les citoyens ou analystes.
- - Générer des visualisations interactives pour mieux interpréter les résultats.
+## Méthode
 
-### Avantages
- - Automatisation du calcul pour différents foyers fiscaux.
- - Personnalisation facile pour analyser diverses situations.
- - Outil pédagogique pour expliquer les principes de l'imposition progressive.
+- **Différence de différences à trois phases** : année pédagogique 2022, interdiction des Crit'Air 5 en 2023, des Crit'Air 4 en 2024, contre une référence 2017-2019. Effets fixes station et date, contrôles vent, température et pluie.
+- **Event study annuel**, référence 2019, pour vérifier les tendances parallèles.
+- **Inférence par placebos dans le temps**, parce qu'il n'y a qu'une ville traitée.
+- **Plan d'analyse pré-enregistré** ([`PLAN_ANALYSE.md`](PLAN_ANALYSE.md)) : hypothèses, échantillon, modèle, règles d'interprétation et tests de robustesse ont été fixés et commités avant toute estimation. Les écarts au plan sont listés en fin de fichier.
 
-## Étape 1 : Charger les bibliothèques nécessaires
+## Données
 
+| Données | Source |
+|---|---|
+| NO₂ et NO horaires, validés (E1a) | Agence européenne pour l'environnement, service de téléchargement |
+| Type et position des stations | EEA, `PanEuropean_metadata.csv` |
+| Météo quotidienne | Météo-France, données climatologiques de base |
 
-### Prérequis : ggplot2 pour les visualisations
-if (!require("ggplot2")) install.packages("ggplot2")
-library(ggplot2)
+## Organisation du dépôt
 
+```
+├── PLAN_ANALYSE.md          plan pré-enregistré
+├── index.qmd                rapport Quarto (publié dans docs/)
+├── collecte/                scripts Python de téléchargement et de construction de la base
+├── data/clean/              base station × jour, couverture des stations, description des variables
+├── R/
+│   ├── 02_import_nettoyage.R   contrôles et préparation
+│   └── 03_estimation.R         modèle, event study, placebos, robustesse
+├── sorties/tableaux/        résultats produits par 03_estimation.R
+├── figures/                 graphiques du rapport et script qui les produit
+└── docs/                    rapport HTML (GitHub Pages)
+```
 
-## Étape 2 : Fonction pour calculer l'impôt
+## Reproduire
 
- Cette fonction calcule l'impôt sur le revenu selon les tranches fiscales officielles en France.
- Elle prend en compte le revenu total du foyer et le nombre de parts fiscales.
-calcul_impot <- function(revenu, np) {
-  revenu_par_part <- revenu / np  # Divise le revenu par le nombre de parts fiscales
-  impot <- 0  # Initialisation de l'impôt à 0
-  
-  if (revenu_par_part < 10777) {
-    impot <- 0  # Pas d'impôt pour les revenus inférieurs à 10 777 €
-  } else if (revenu_par_part < 27478) {
-    impot <- (revenu_par_part - 10777) * 0.11
-  } else if (revenu_par_part < 78570) {
-    impot <- (revenu_par_part - 27478) * 0.3 + (27478 - 10777) * 0.11
-  } else if (revenu_par_part < 168994) {
-    impot <- (revenu_par_part - 78570) * 0.41 + (78570 - 27478) * 0.3 + (27478 - 10777) * 0.11
-  } else {
-    impot <- (revenu_par_part - 168994) * 0.45 + (168994 - 78570) * 0.41 +
-      (78570 - 27478) * 0.3 + (27478 - 10777) * 0.11
-  }
-  
-  
-  return(np * impot)
-}
+```r
+source("R/02_import_nettoyage.R")
+source("R/03_estimation.R")
+```
 
+puis, dans le terminal : `quarto render`.
 
-## Étape 3 : Création des données initiales
+Dans les scripts R, la variable `racine` indique le dossier du projet : adaptez-la à votre ordinateur.
 
-Nous créons un tableau simulant les revenus et parts fiscales pour plusieurs foyers.
-Cela permet de tester la fonction sur un échantillon représentatif.
-revenus_data <- data.frame(
-  Revenu = c(6000, 50000, 75000, 30000, 100000, 15000, 60000),  
-  Parts = c(3.5, 2, 3, 1, 4, 1, 2)  
-)
+## Limites principales
 
-### Enregistre les données dans un fichier CSV
-write.csv(revenus_data, "revenus.csv", row.names = FALSE)
-cat("Fichier 'revenus.csv' créé avec succès.\n")
+Une seule ville traitée et deux stations à Strasbourg actives sur toute la période ; décrochage de 2021 non expliqué ; placebos non centrés sur zéro ; dates de verbalisation à confirmer. Détail dans le rapport.
 
-## Étape 4 : Lecture des données
+---
 
-### Charge les données pour les manipuler et effectuer les calculs
-revenus_data <- read.csv("revenus.csv")
-cat("Données lues depuis 'revenus.csv':\n")
-print(revenus_data)
-
-
-## Étape 5 : Calcul de l'impôt
-
-### Ajoute une colonne "Impot" dans le tableau en utilisant la fonction calcul_impot
-revenus_data$Impot <- mapply(calcul_impot, revenus_data$Revenu, revenus_data$Parts)
-cat("Données avec impôt calculé:\n")
-print(revenus_data)
-
-
-## Étape 6 : Sauvegarde des résultats
-
-
-### Enregistre les résultats (avec les impôts calculés) dans un nouveau fichier CSV
-write.csv(revenus_data, "resultats_impots.csv", row.names = FALSE)
-cat("Fichier 'resultats_impots.csv' créé avec succès.\n")
-
-
-## Étape 7 : Visualisation des résultats
-
-ggplot(revenus_data, aes(x = Revenu, y = Impot, color = as.factor(Parts))) +
-  geom_point(size = 3) +  # Points représentant chaque foyer
-  labs(
-    title = "Impôt en fonction du revenu et des parts fiscales",
-    x = "Revenu (€)",  # Étiquette de l'axe des x
-    y = "Impôt (€)",   # Étiquette de l'axe des y
-    color = "Parts fiscales"  # Légende pour les parts fiscales
-  ) +
-  theme_minimal()
-
-
-## Conclusion
-Ce projet démontre comment utiliser R pour modéliser des calculs complexes
-et produire
+Projet réalisé par Djime Mounsif, M2 Statistique et Économétrie, Université de Strasbourg. Réalisé avec l'aide d'un assistant IA le code et la relecture.
