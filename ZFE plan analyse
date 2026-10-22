@@ -138,9 +138,3 @@ Variation du NO₂ moyen à Strasbourg entre P1 et P2, sans villes témoins. Pr�
 - Intensité réelle des contrôles inconnue.
 - Autres politiques propres à Strasbourg (tram, plan vélo, chantiers) non isolées.
 - Déplacement possible des vieux véhicules vers la périphérie.
-
-## 12. Écarts au plan
-
-Section à compléter pendant l'analyse : date, écart, raison.
-
-- 22 octobre 2026 : avant la rédaction de ce plan, les moyennes annuelles de NO₂ par station ont été calculées pour contrôler la qualité des données (fichier `couverture_stations.csv`). Aucune estimation ni aucun graphique n'a été produit.
